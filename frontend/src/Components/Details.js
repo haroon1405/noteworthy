@@ -1,11 +1,81 @@
-import React,{useState} from "react";
+import React,{useState, useEffect} from "react";
+import { useParams } from 'react-router-dom';
 import { Link } from "react-router-dom";
 import deleteBtn from '../Images/trash-bin.png'
 import editBtn from '../Images/pen.png'
+import { useNoteContext } from "../hooks/useNoteContext";
+import { useNavigate } from 'react-router-dom';
+
+const deleteNote = (id) => {
+
+    fetch(`/notes/${id}`, {
+        method: 'DELETE',
+    })
+        .then((response) => {
+            if (response.ok) {
+                return response.json()
+            }
+        })
+        .then((data) => {
+            console.log(data)
+        })
+}
 
 export default function Details(){
 
+    const {state,dispatch} = useNoteContext()
+    const navigate = useNavigate();
+
+    const { id } = useParams();
     const [isOpen, setIsOpen] = useState(false);
+    const [noteDetails, setNoteDetails] = useState({noteTitle:"",noteDesc:"",noteTime:""});
+
+    const handleDelete = (id) => {
+        deleteNote(id);
+        dispatch({type: 'DELETE_NOTE', payload: { _id: id }})
+        // dispatch({type: 'SET_NOTES', payload: state})
+        navigate("/")
+    }
+
+    const formatDateTime = (isoString) => {
+        const date = new Date(isoString);
+
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = String(date.getFullYear()).slice(2);
+
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        const formattedDate = `${day}/${month}/${year}`
+        const formattedTime = `${hours}:${minutes}`
+
+        return [formattedDate, formattedTime];
+    }
+    
+    
+    useEffect(()=>{
+        
+        fetch(`/notes/${id}`)
+        .then((response)=>{
+            if(response.ok){
+                return response.json()
+            }
+        })
+        .then((data)=>{
+            console.log(data)
+            setNoteDetails((prev)=>({
+                ...prev,
+                noteTitle: data.title,
+                noteDesc: data.desc,
+                noteTime: data.updatedAt,
+            }))
+        })
+        .catch((error)=>{
+            console.log(error)
+        })
+
+    },[id])
 
   const togglePopup = () => {
     setIsOpen(!isOpen);
@@ -23,10 +93,10 @@ export default function Details(){
                     <img src={editBtn} className='w-11 hover:opacity-60 ease-in-out active:opacity-100 opacity-90' alt='Edit'/>
                     <img src={deleteBtn} onClick={togglePopup} className='w-11 hover:opacity-60 ease-in-out active:opacity-100 opacity-90' alt='Delete'/>
                 </div>
-                <p className="text-4xl mb-3 font-maname">Trip to Saudi</p>
-                <p className="text-[12px] italic text-gray-400">12/03/23 &#8226; 09:34</p>
+                <p className="text-4xl mb-3 font-maname">{noteDetails.noteTitle}</p>
+                <p className="text-[12px] italic text-gray-400">{formatDateTime(noteDetails.noteTime)[0]} &#8226; {formatDateTime(noteDetails.noteTime)[1]}</p>
                 <p className="text-lg leading-snug mb-6 mt-2 font-cairo overflow-hidden">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat conse.
+                    {noteDetails.noteDesc}
                 </p>
             </div>
             {isOpen && (
@@ -39,7 +109,7 @@ export default function Details(){
                     </button>
                     <div className="flex flex-col items-center mt-4">
                         <p className="text-black text-2xl select-none">Are you sure you want to delete?</p>
-                        <button className="mt-4 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white py-2 px-4 rounded" onClick={togglePopup}>
+                        <button className="mt-4 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white py-2 px-4 rounded" onClick={() => handleDelete(id)}>
                         Delete
                         </button>
                     </div>
