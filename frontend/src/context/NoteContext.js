@@ -12,8 +12,13 @@ export const noteReducer = (state, action) => {
         return {
           notes: [action.payload, ...state.notes]
         }
+    case 'UPDATE_NOTE':
+      return {
+          notes: state.notes.map((note) =>
+          note._id === action.payload._id ? action.payload : note
+        ),
+      };
     case 'DELETE_NOTE':
-        console.log(action.payload)
       return {
           notes: state.notes.filter((note) => note._id !== action.payload._id)
       }
@@ -23,7 +28,7 @@ export const noteReducer = (state, action) => {
 }
 
 const initialState = {
-  notes: []
+  notes: [],
 }
 
 export const NoteContextProvider = ({ children }) => {

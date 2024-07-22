@@ -55,7 +55,8 @@ async function updateNote(req,res){
     }
 
     const updatedNote = await Note.findOneAndUpdate({_id:id},{
-        ...req.body
+        title:req.body.formTitle,
+        desc:req.body.formDesc
     })
 
     if(!updatedNote){
